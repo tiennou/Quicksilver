@@ -198,12 +198,17 @@ static BOOL gModifiersAreIgnored;
     id obj = [[self actionDict] objectForKey:kActionArgumentCount];
     if (obj)
         return [obj integerValue];
-    
+
+	NSUInteger argCount = 0;
+	obj = [self objectForKey:kActionSelector];
+	if (obj)
+		argCount = [[obj componentsSeparatedByString:@":"] count] - 1;
+	
     id provider = [self provider];
     if ([provider respondsToSelector:@selector(argumentCountForAction:)])
-        return [provider argumentCountForAction:[self identifier]];
-    
-    return [[QSActionProvider provider] argumentCountForAction:[self identifier]];
+        argCount = [provider argumentCountForAction:[self identifier]];
+
+    return argCount;
 }
 
 - (void)setArgumentCount:(NSInteger)newArgumentCount {

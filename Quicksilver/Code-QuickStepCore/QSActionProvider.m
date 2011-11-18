@@ -14,14 +14,7 @@
 - (NSArray *)types { return nil;  }
 - (NSArray *)fileTypes { return nil;}
 - (QSAction *)initializeAction:(QSAction *)action { return action;  }
-- (NSInteger)argumentCountForAction:(NSString *)action {
-    return [[[[QSAction actionWithIdentifier:action] objectForKey:kActionSelector] componentsSeparatedByString:@":"] count] - 1;
-}
-
-- (NSString *)titleForAction:(NSString *)action {
-	NSString *title = [[NSBundle bundleForClass:[self class]] safeLocalizedStringForKey:action value:action table:@"QSAction.name"];
-	return title ? title : action;
-}
+- (NSString *)titleForAction:(NSString *)action { return nil; }
 - (NSImage *)iconForAction:(NSString *)action { return [NSImage imageNamed:@"Arrow"];  }
 - (NSArray *)validActionsForDirectObject:(QSObject *)dObject indirectObject:(QSObject *)iObject { return nil;  }
 - (NSArray *)validIndirectObjectsForAction:(NSString *)action directObject:(QSObject *)dObject { return nil;  }

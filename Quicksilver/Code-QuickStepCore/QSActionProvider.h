@@ -10,7 +10,6 @@
 - (NSArray *)fileTypes;
 - (NSArray *)actions;
 - (NSString *)titleForAction:(NSString *)action;
-- (NSInteger)argumentCountForAction:(NSString *)action;
 - (NSImage *)iconForAction:(NSString *)action;
 - (NSArray *)validActionsForDirectObject:(QSObject *)dObject indirectObject:(QSObject *)iObject;
 - (NSArray *)validIndirectObjectsForAction:(NSString *)action directObject:(QSObject *)dObject;
@@ -18,6 +17,8 @@
 
 - (QSAction *)initializeAction:(QSAction *)action;
 
+@optional;
+- (NSInteger)argumentCountForAction:(NSString *)action;
 @end
 
 @interface QSActionProvider : NSObject <QSActionProvider> {
