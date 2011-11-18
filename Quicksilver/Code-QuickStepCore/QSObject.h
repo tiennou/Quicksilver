@@ -10,8 +10,8 @@
 
 extern NSSize QSMaxIconSize;
 
-@interface NSObject (QSObjectHandlerInformalProtocol)
-//@protocol QSObjectHandler <NSObject>
+@protocol QSObjectHandler <NSObject>
+@optional;
 - (BOOL)objectHasChildren:(QSObject *)object;
 - (BOOL)objectHasValidChildren:(QSObject *)object;
 
