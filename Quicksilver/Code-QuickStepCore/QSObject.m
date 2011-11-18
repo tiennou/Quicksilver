@@ -683,9 +683,14 @@ containg multiple objects with the same identifier. Best efforts should be made 
 }
 
 - (NSString *)name {
-	if (!name) name = [[meta objectForKey:kQSObjectPrimaryName] retain];
+	if (!name)
+		name = [[meta objectForKey:kQSObjectPrimaryName] retain];
+
+	id handler = [self handlerForSelector:@selector(nameForObject:)];
+	if (!name && handler)
+		name = [[handler nameForObject:self] retain];
+
 	return name;
-	//	return 	[meta objectForKey:kQSObjectPrimaryName];
 }
 
 - (void)setName:(NSString *)newName {

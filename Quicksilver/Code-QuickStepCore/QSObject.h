@@ -20,6 +20,7 @@ extern NSSize QSMaxIconSize;
 - (QSObject *)parentOfObject:(QSObject *)object;
 - (NSString *)detailsOfObject:(QSObject *)object;
 - (NSString *)identifierForObject:(QSObject *)object;
+- (NSString *)nameForObject:(QSObject *)object;
 - (NSString *)kindOfObject:(QSObject *)object;
 - (void)setQuickIconForObject:(QSObject *)object;
 - (BOOL)loadIconForObject:(QSObject *)object;
