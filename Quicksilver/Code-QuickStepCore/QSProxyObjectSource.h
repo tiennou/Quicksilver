@@ -7,14 +7,15 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "QSObjectSource.h"
 
-@interface QSProxyObjectHandler : NSObject {
+@interface QSProxyObjectHandler : NSObject <QSObjectHandler> {
     
 }
 
 @end
 
-@interface QSProxyObjectSource : NSObject {
+@interface QSProxyObjectSource : NSObject <QSObjectSource> {
 
 }
 
