@@ -155,8 +155,10 @@ NSSize QSMaxIconSize;
 	if ([objects count] == 1) {
 		return [objects objectAtIndex:0];
 	}
+    return [QSCollection collectionWithObjects:objects];
+/*
 	NSMutableSet *typesSet = nil;
-	
+
 	// Dict to store each object's data
 	NSMutableDictionary *combinedData = [NSMutableDictionary dictionary];
 	NSString *type;
@@ -211,6 +213,7 @@ NSSize QSMaxIconSize;
 		// fall back on setting a simple name
 		[object setName:NSLocalizedString(@"Combined Objects", nil)];
 	return object;
+*/
 }
 
 - (void)dealloc {

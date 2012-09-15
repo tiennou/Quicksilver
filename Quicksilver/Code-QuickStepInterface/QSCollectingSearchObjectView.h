@@ -12,26 +12,11 @@
 
 @class QSCollection;
 
-@interface QSCollectingSearchObjectView : QSSearchObjectView {
-	NSMutableArray *collection;
-	BOOL 			collecting; // is the user actively collecting things with comma?
-	NSRectEdge		collectionEdge;
-	CGFloat			collectionSpace;
-}
+@interface QSCollectingSearchObjectView : QSSearchObjectView
 
-- (IBAction)emptyCollection:(id)sender;
-- (BOOL)objectIsInCollection:(QSObject *)thisObject;
+@property (assign) NSRectEdge collectionEdge;
+@property (assign) CGFloat collectionSpace;
 
-- (NSRectEdge) collectionEdge;
-- (void)setCollectionEdge:(NSRectEdge)value;
-
-- (CGFloat) collectionSpace;
-- (void)setCollectionSpace:(CGFloat)value;
-
-/**
- Add the current object to the collection.
- @param sender the calling object (unused)
- **/
 - (IBAction)collect:(id)sender;
 /**
  Remove the most recently selected object from the collection
@@ -45,6 +30,9 @@
  @param sender the calling object (unused)
  **/
 - (IBAction)uncollectLast:(id)sender;
+- (IBAction)emptyCollection:(id)sender;
+
+- (BOOL)objectIsInCollection:(QSObject *)thisObject;
 
 /**
  Combined objects are split and the components are added to the

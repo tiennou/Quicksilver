@@ -21,3 +21,4 @@ extern NSString *QSIMMultiAccountType; 				//NSSet of ("AIM:accountname") also M
 extern NSString *QSCommandType; 			//QSCommand
 extern NSString *QSHandledType; 			//NSDictionary
 extern NSString *QSRemoteHostsType;     // NSString (remote hostname or FQDN)
+extern NSString *QSCollectionType;
