@@ -139,7 +139,7 @@
 		NSLog(@"Localization: Missing localized key \"%@\" in table \"%@\" for localizations \"%@\"",
 			  key,
 			  tableName,
-			  defaultLocalizations);
+			  @"en");
 	}
 #endif
 	
