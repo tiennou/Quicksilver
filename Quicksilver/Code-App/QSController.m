@@ -245,7 +245,6 @@ static QSController *defaultController = nil;
 #if DEBUG
 	/* missingLocalizedValuesForAllTables *only* exists in debug ! */
 	NSMutableDictionary *missingBundles = [NSBundle performSelector:@selector(missingLocalizedValuesForAllBundles)];
-	NSLog(@"Missing localisations for bundles: %@", missingBundles);
 	
 	NSString *localizationPath = QSApplicationSupportSubPath(@"Localization", YES);
 	for (NSString *bundleIdentifier in missingBundles) {
@@ -257,7 +256,17 @@ static QSController *defaultController = nil;
 				NSString *tablePath = [[localizationPath stringByAppendingPathComponent:bundleIdentifier] stringByAppendingPathComponent:missingLocaleKey];
 				NSString *tableName = [[tablePath stringByAppendingPathComponent:missingTableKey] stringByAppendingPathExtension:@"strings"];
 				[[NSFileManager defaultManager] createDirectoriesForPath:tablePath];
-				[missingTable writeToFile:tableName atomically:NO];
+                
+                NSMutableData *data = [NSMutableData data];
+                for (NSString *key in missingTable) {
+                    NSString *value = [missingTable objectForKey:key];
+                    NSString *line = [NSString stringWithFormat:@"%@ = %@;\n", [key stringByQuoting], [value stringByQuoting]];
+                    [data appendData:[line dataUsingEncoding:NSUTF8StringEncoding]];
+                }
+                NSError *error = nil;
+                if (![data writeToFile:tableName options:NSDataWritingAtomic error:&error]) {
+                    NSLog(@"Error writing data %@", error);
+                }
 			}
 		}
 	}
