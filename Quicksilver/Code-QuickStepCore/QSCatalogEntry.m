@@ -152,13 +152,11 @@ NSDictionary *enabledPresetDictionary;*/
 }
 
 - (NSString *)type {
-	id source = [self source];
-	NSString *theID = NSStringFromClass([source class]);
-	NSString *title = [[NSBundle bundleForClass:[source class]] safeLocalizedStringForKey:theID value:theID table:@"QSObjectSource.name"];
-	if ([title isEqualToString:theID])
-		return [[NSBundle mainBundle] safeLocalizedStringForKey:theID value:theID table:@"QSObjectSource.name"];
-	else
-		return title;
+	NSString *theID = NSStringFromClass([[self source] class]);
+	NSString *title = [[self bundle] safeLocalizedStringForKey:theID
+                                                         value:theID
+                                                         table:@"QSObjectSource.name"];
+    return title;
 }
 
 - (BOOL)isCatalog { return self == [[QSLibrarian sharedInstance] catalog]; }
@@ -343,15 +341,38 @@ NSDictionary *enabledPresetDictionary;*/
 	return [[self name] compare:[other name]];
 }
 
+- (NSBundle *)bundle {
+    if (!bundle)
+        bundle = [[NSBundle bundleForClass:[[self source] class]] retain];
+    return bundle;
+}
+
+- (void)setBundle:(NSBundle *)aBundle {
+    if (bundle != aBundle) {
+        [bundle release];
+        bundle = [aBundle retain];
+    }
+}
+
 - (NSString *)name {
 	NSString *ID = [self identifier];
 	if ([ID isEqualToString:@"QSSeparator"])
 		return @"";
-	if (!name)
-		name = [info objectForKey:kItemName];
+    if (!name) {
+        QSObjectSource *source = [self source];
+        if (source && [source respondsToSelector:@selector(nameForEntry:)])
+            name = [source nameForEntry:info];
+    }
 	if (!name) {
-		name = [bundle?bundle:[NSBundle mainBundle] safeLocalizedStringForKey:ID value:ID table:@"QSCatalogPreset.name"];
-		if (name) [self setValue:name forKey:@"name"];
+        NSString *defaultName = [info objectForKey:kItemName];
+		name = [[self bundle] safeLocalizedStringForKey:ID
+                                                  value:defaultName
+                                                  table:@"QSCatalogPreset.name"];
+        if (!name)
+            name = defaultName;
+
+		if (name)
+            [self setValue:name forKey:@"name"];
 	}
 	return name;
 }
