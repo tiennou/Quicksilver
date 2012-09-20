@@ -67,8 +67,15 @@
 }
 
 - (void)setValue:(NSString *)value forLocalizedKey:(NSString *)key inTable:(NSString *)tableName inLocale:(NSString *)locale {
-	if (value)
-		[[self missingLocalizedValuesForKeysInTable:tableName inLocale:locale] setObject:value forKey:key];
+    if ([locale isEqualToString:@"English"])
+        locale = @"en";
+    if (!value)
+        value = @"";
+    if (key) {
+        NSMutableDictionary *values = [self missingLocalizedValuesForKeysInTable:tableName
+                                                                        inLocale:locale];
+        [values setObject:value forKey:key];
+    }
 }
 #endif
 
