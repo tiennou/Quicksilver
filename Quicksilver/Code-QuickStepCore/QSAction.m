@@ -132,6 +132,10 @@ static BOOL gModifiersAreIgnored;
 	[QSExec updateRanks];
 }
 
+- (NSBundle *)bundle {
+    return [NSBundle bundleForClass:[[self provider] class]];
+}
+
 - (NSString*)name {
     NSString *n = [super name];
     NSString *ident = [self identifier];
