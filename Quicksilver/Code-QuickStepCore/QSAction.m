@@ -151,11 +151,6 @@ static BOOL gModifiersAreIgnored;
                 n = [[self provider] titleForAction:ident];
         }
 		
-#ifdef DEBUG
-        if(!n)
-            NSLog(@"Action %@ without provider.", ident);
-#endif
-		
         [self setName:n];
         
         if (!n) n = ident;
@@ -243,6 +238,10 @@ static BOOL gModifiersAreIgnored;
 	id provider = [dict objectForKey:kActionProvider];
 	if (!provider)
 		provider = [QSReg getClassInstance:[dict objectForKey:kActionClass]];
+#ifdef DEBUG
+    if(!provider)
+        NSLog(@"Action %@ without provider.", [self identifier]);
+#endif
 	return provider;
 }
 
