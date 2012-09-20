@@ -678,12 +678,20 @@ containg multiple objects with the same identifier. Best efforts should be made 
 }
 
 - (NSString *)name {
-	if (!name)
-		name = [[meta objectForKey:kQSObjectPrimaryName] retain];
+    if (name)
+        return name;
 
-	id handler = [self handlerForSelector:@selector(nameForObject:)];
-	if (!name && handler)
-		name = [[handler nameForObject:self] retain];
+	if (!name) {
+        id handler = [self handlerForSelector:@selector(nameForObject:)];
+        if (handler)
+            name = [[handler nameForObject:self] retain];
+    }
+
+    NSString *defaultName = [meta objectForKey:kQSObjectPrimaryName];
+    if (!name)
+        name = [[[self bundle] safeLocalizedStringForKey:[self identifier]
+                                                   value:defaultName
+                                                   table:@"QSObject.name"] retain];
 
 	return name;
 }
