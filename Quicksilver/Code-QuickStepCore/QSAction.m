@@ -137,24 +137,22 @@ static BOOL gModifiersAreIgnored;
 }
 
 - (NSString*)name {
-    NSString *n = [super name];
+    NSString *n = nil;
     NSString *ident = [self identifier];
+
+    n = [super name];
+
     if (!n) {
-        n = [[self bundle] safeLocalizedStringForKey:ident
-                                               value:nil
-                                               table:@"QSAction.name"];
-        if (!n) n = [[self actionDict] objectForKey:kActionName];
-        
-        if (!n) {
-            NSObject <QSActionProvider> *provider = [self provider];
-            if(provider && [provider respondsToSelector:@selector(titleForAction:)])
-                n = [[self provider] titleForAction:ident];
+        // Ask the provider
+        NSObject <QSActionProvider> *provider = [self provider];
+        if (provider && [provider respondsToSelector:@selector(titleForAction:)]) {
+            n = [[self provider] titleForAction:ident];
         }
-		
-        [self setName:n];
-        
-        if (!n) n = ident;
+        if (n)
+            [self setName:n];
     }
+    if (!n)
+        n = ident;
     return n;
 }
 
@@ -384,11 +382,21 @@ static BOOL gModifiersAreIgnored;
 }
 
 - (NSString *)detailsOfObject:(QSObject *)object {
-	NSString *newDetails = [[object bundle] safeLocalizedStringForKey:[object identifier] value:nil table:@"QSAction.description"];
-	if (newDetails)
-		return newDetails;
-	else
-		return [[(QSAction *)object actionDict] objectForKey:@"description"];
+    NSString *defaultDetails = [[(QSAction *)object actionDict] objectForKey:@"description"];
+	NSString *details = [[object bundle] safeLocalizedStringForKey:[object identifier]
+                                                                value:defaultDetails
+                                                                table:@"QSAction.description"];
+
+    return (details ? details : defaultDetails);
+}
+
+- (NSString *)nameForObject:(QSObject *)object {
+    NSString *defaultName = [[(QSAction *)object actionDict] objectForKey:@"name"];
+    NSString *name = [[object bundle] safeLocalizedStringForKey:[object identifier]
+                                                          value:defaultName
+                                                          table:@"QSAction.name"];
+
+    return (name ? name : defaultName);
 }
 
 - (void)setQuickIconForObject:(QSObject *)object { [object setIcon:[NSImage imageNamed:@"defaultAction"]]; }

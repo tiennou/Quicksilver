@@ -63,5 +63,5 @@
 - (NSString *)commandFormat;
 @end
 
-@interface QSActionHandler : NSObject
+@interface QSActionHandler : NSObject <QSObjectHandler>
 @end
