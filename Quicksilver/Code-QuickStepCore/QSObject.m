@@ -389,21 +389,18 @@ NSSize QSMaxIconSize;
 
 - (NSString *)details {
 	NSString *details = [meta objectForKey:kQSObjectDetails];
-	if (details) return details;
+	if (details)
+        return details;
 
 	id handler = nil;
 	if (handler = [self handlerForSelector:@selector(detailsOfObject:)]) {
 		details = [handler detailsOfObject:self];
 	}
 
-	NSBundle *mybundle = [self bundle];
-	// this is almost always (null) so test it first
-	if (mybundle) {
-		if (details) {
-			details = [mybundle safeLocalizedStringForKey:details value:details table:@"QSObject.details"];
-		} else {
-			details = [mybundle safeLocalizedStringForKey:[self identifier] value:details table:@"QSObject.details"];
-		}
+    if (!details) {
+        details = [[self bundle] safeLocalizedStringForKey:[self identifier]
+                                                     value:nil
+                                                     table:@"QSObject.details"];
 	}
     if (details) {
         [self setDetails:details];
