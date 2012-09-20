@@ -397,7 +397,7 @@ NSSize QSMaxIconSize;
 		details = [handler detailsOfObject:self];
 	}
 
-    if (!details) {
+    if (!handler && !details) {
         details = [[self bundle] safeLocalizedStringForKey:[self identifier]
                                                      value:nil
                                                      table:@"QSObject.details"];
