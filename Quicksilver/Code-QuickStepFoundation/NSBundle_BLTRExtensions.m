@@ -104,10 +104,11 @@
 	if(DEBUG_LOCALIZATION) {
 		NSString *preferred = [[self preferredLocalizations] objectAtIndex:0];
 		[self setValue:defaultValue forLocalizedKey:key inTable:tableName inLocale:preferred];
-		NSLog(@"Localization: Missing localized key \"%@\" in table \"%@\" for localization \"%@\", falling back",
+		NSLog(@"Localization: Missing localized key \"%@\" in table \"%@\" for localization \"%@\" in bundle \"%@\", falling back",
 			  key,
 			  tableName,
-			  preferred);
+			  preferred,
+              [self bundlePath]);
 	}
 #endif
 	NSArray *defaultLocalizations = [NSArray arrayWithObjects:@"English", @"en", nil];
@@ -136,10 +137,11 @@
 #ifdef DEBUG
 	if(DEBUG_LOCALIZATION) {
 		[self setValue:defaultValue forLocalizedKey:key inTable:tableName inLocale:@"en"];
-		NSLog(@"Localization: Missing localized key \"%@\" in table \"%@\" for localizations \"%@\"",
+		NSLog(@"Localization: Missing localized key \"%@\" in table \"%@\" for localizations \"%@\" in bundle \"%@\"",
 			  key,
 			  tableName,
-			  @"en");
+			  @"en",
+              [self bundlePath]);
 	}
 #endif
 	
