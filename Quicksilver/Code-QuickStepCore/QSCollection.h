@@ -7,7 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "QSObject.h"
+#import <QSCore/QSObject.h>
 
 @interface QSCollection : QSObject
 + (id)collectionWithObjects:(NSArray *)objects;
@@ -31,4 +31,8 @@
 
 - (void)removeAllObjects;
 - (void)removeObject:(id)anObject;
+@end
+
+@interface QSCollectionObjectHandler : NSObject <QSObjectHandler>
+
 @end
