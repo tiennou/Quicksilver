@@ -10,7 +10,6 @@ extern CGFloat QSMinScore;
 @class QSActions;
 @class QSAction;
 @class QSTask;
-@class QSTaskController;
 
 @class QSLibrarian;
 extern QSLibrarian *QSLib; // Shared Instance
