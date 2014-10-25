@@ -19,6 +19,7 @@ extern QSLibrarian *QSLib; // Shared Instance
 @property (retain) QSThreadSafeMutableDictionary *objectDictionary;
 @property (retain) QSObject *pasteboardObject;
 @property (retain, readonly) QSTask *scanTask;
+@property (readonly, retain) QSCatalogEntry *catalog;
 
 + (instancetype)sharedInstance;
 + (void)removeIndexes;
@@ -72,8 +73,6 @@ extern QSLibrarian *QSLib; // Shared Instance
 //- (void)loadActionsForObject:(id)actionObject;
 - (QSCatalogEntry *)catalogCustom;
 - (void)enableEntries;
-- (QSCatalogEntry *)catalog ;
-- (void)setCatalog:(QSCatalogEntry *)newCatalog ;
 - (NSMutableSet *)defaultSearchSet ;
 - (void)setDefaultSearchSet:(NSMutableSet *)newDefaultSearchSet ;
 - (NSMutableDictionary *)appSearchArrays ;

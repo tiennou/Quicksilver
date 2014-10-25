@@ -25,7 +25,6 @@ static CGFloat searchSpeed = 0.0;
 #endif
 
 @interface QSLibrarian () {
-	QSCatalogEntry *catalog; //Root Catalog Entry
 
 	NSMutableDictionary *enabledPresetsDictionary;
 	NSMutableSet *defaultSearchSet;
@@ -54,6 +53,7 @@ static CGFloat searchSpeed = 0.0;
 	BOOL catalogLoaded;
 }
 
+@property (retain) QSCatalogEntry *catalog; // Root Catalog Entry
 @property (retain) QSTask *scanTask;
 
 @end
@@ -126,8 +126,15 @@ static CGFloat searchSpeed = 0.0;
 		NSLog(@"Disabling Catalog");
 	} else {
 #endif
-		[self setCatalog:[QSCatalogEntry entryWithDictionary:
-		[NSMutableDictionary dictionaryWithObjectsAndKeys:@"QSCATALOGROOT", kItemName, @"QSGroupObjectSource", kItemSource, [NSMutableArray arrayWithObjects:modulesEntry, nil] , kItemChildren, [NSNumber numberWithBool:YES] , kItemEnabled, nil]]];
+		NSDictionary *catalogDict = @{
+			kItemName: @"QSCATALOGROOT",
+			kItemSource: @"QSGroupObjectSource",
+			kItemChildren: modulesEntry,
+			kItemEnabled: @(YES),
+		};
+
+self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
+
 #ifdef DEBUG
 	}
 #endif
@@ -160,15 +167,16 @@ static CGFloat searchSpeed = 0.0;
 }
 
 - (void)enableEntries {
-	[[catalog leafEntries] makeObjectsPerformSelector:@selector(enable)];
+	[self.catalog.leafEntries makeObjectsPerformSelector:@selector(enable)];
 }
 
 - (void)pruneInvalidChildren:(id)sender {
 #ifdef DEBUG
 	if(VERBOSE) NSLog(@"prune invalid");
 #endif
-	[catalog pruneInvalidChildren];
+	[self.catalog pruneInvalidChildren];
 }
+
 - (QSCatalogEntry *)catalogCustom {
 	return [self entryForID:kCustomCatalogID];
 }
@@ -191,12 +199,12 @@ static CGFloat searchSpeed = 0.0;
 
         QSCatalogEntry *parent = nil;
 		if ([path isEqualToString:@"/"])
-			parent = catalog;
+			parent = self.catalog;
 		else if (path)
-			parent = [catalog childWithPath:path];
+			parent = [self.catalog childWithPath:path];
 
 		if (!parent) {
-			parent = [catalog childWithPath:@"QSPresetModules"];
+			parent = [self.catalog childWithPath:@"QSPresetModules"];
 		}
 		[parent.children addObject:entry];
 #warning oh yeah, while we're at it, sort on each loop !
@@ -223,7 +231,7 @@ static CGFloat searchSpeed = 0.0;
                                                                        [NSNumber numberWithBool:YES] , @"permanent",
                                                                        [NSNumber numberWithBool:YES] , kItemEnabled, nil]];
     
-	[catalog.children addObject:customEntry];
+	[self.catalog.children addObject:customEntry];
     
 	NSMutableDictionary *catalogStorage = [NSMutableDictionary dictionaryWithContentsOfFile:[pCatalogSettings stringByStandardizingPath]];
 
@@ -309,10 +317,8 @@ static CGFloat searchSpeed = 0.0;
 }
 
 - (void)reloadEntrySources:(NSNotification *)notif {
-	NSArray *entries = [catalog leafEntries];
 	[entriesBySource removeAllObjects];
-
-	for (QSCatalogEntry *thisEntry in entries) {
+	for (QSCatalogEntry *thisEntry in self.catalog.leafEntries) {
 		NSString *source = [thisEntry.info objectForKey:kItemSource];
 
 		NSMutableArray *sourceArray = [entriesBySource objectForKey:source];
@@ -325,8 +331,7 @@ static CGFloat searchSpeed = 0.0;
 	}
 }
 
-- (void)reloadEntry:(NSNotification *)notif
-{
+- (void)reloadEntry:(NSNotification *)notif {
 	QSCatalogEntry *entry = [self entryForID:[notif object]];
 	if (entry) {
 		[entry scanForced:YES];
@@ -334,7 +339,7 @@ static CGFloat searchSpeed = 0.0;
 }
 
 - (void)reloadIDDictionary:(NSNotification *)notif {
-	NSArray *entries = [catalog deepChildrenWithGroups:YES leaves:YES disabled:YES];
+	NSArray *entries = [self.catalog deepChildrenWithGroups:YES leaves:YES disabled:YES];
 	[entriesByID removeAllObjects];
 	for (QSCatalogEntry *thisEntry in entries) {
 		[entriesByID setObject:thisEntry forKey:[thisEntry identifier]];
@@ -345,7 +350,7 @@ static CGFloat searchSpeed = 0.0;
 - (void)reloadSets:(NSNotification *)notif {
     [self.objectDictionary removeAllObjects];
 	//NSLog(@"cat %@ %@", catalog, [catalog leafEntries]);
-    for(QSCatalogEntry * entry in [catalog leafEntries]) {
+	for (QSCatalogEntry * entry in self.catalog.leafEntries) {
         NSArray *entryContents = [[entry contents] copy];
         for (QSObject *obj in entryContents) {
             if ([obj identifier]) {
@@ -386,7 +391,7 @@ static CGFloat searchSpeed = 0.0;
 }
 
 - (QSCatalogEntry *)firstEntryContainingObject:(QSObject *)object {
-	NSArray *entries = [catalog deepChildrenWithGroups:NO leaves:YES disabled:NO];
+	NSArray *entries = [self.catalog deepChildrenWithGroups:NO leaves:YES disabled:NO];
     NSIndexSet *matchedIndexes = [entries indexesOfObjectsWithOptions:NSEnumerationConcurrent passingTest:^BOOL(QSCatalogEntry *entry, NSUInteger idx, BOOL *stop) {
         return [entry.contents containsObject:object];
     }];
@@ -435,13 +440,9 @@ static CGFloat searchSpeed = 0.0;
 #ifdef DEBUG
 	NSDate *date = [NSDate date];
 #endif
-	
-	NSArray *entries = [catalog leafEntries];
 
-//	NSLog(@"entries %@", entries);
 	BOOL indexesValid = YES;
-	//BOOL indexValid;
-	for(QSCatalogEntry * entry in entries) {
+	for (QSCatalogEntry * entry in self.catalog.leafEntries) {
 		if (![entry loadIndex]) {
 			if (!invalidIndexes) invalidIndexes = [[NSMutableArray alloc] init];
 			NSLog(@"entry %@ is invalid", entry);
@@ -455,7 +456,7 @@ static CGFloat searchSpeed = 0.0;
 		NSLog(@"Indexes loaded (%fms) ", (-[date timeIntervalSinceNow] *1000));
 #endif
 	
-	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogEntryIndexedNotification object:catalog];
+	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogEntryIndexedNotification object:self.catalog];
     if (invalidIndexes)
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(scanInvalidIndexes) name:NSApplicationDidFinishLaunchingNotification object:nil];
 	return indexesValid;
@@ -559,8 +560,7 @@ static CGFloat searchSpeed = 0.0;
 }
 
 - (void)loadMissingIndexes {
-	NSArray *entries = [catalog leafEntries];
-	for (QSCatalogEntry *entry in entries) {
+	for (QSCatalogEntry *entry in self.catalog.leafEntries) {
 		if (!entry.canBeIndexed || !entry.contents) {
 			[entry scanAndCache];
 		} else {
@@ -593,7 +593,7 @@ static CGFloat searchSpeed = 0.0;
             [self.scanTask start];
 
             scannerCount++;
-            NSArray *children = [catalog deepChildrenWithGroups:NO leaves:YES disabled:NO];
+			NSArray *children = [self.catalog deepChildrenWithGroups:NO leaves:YES disabled:NO];
             NSUInteger i;
             NSUInteger c = [children count];
             for (i = 0; i<c; i++) {
@@ -733,15 +733,6 @@ static CGFloat searchSpeed = 0.0;
 	}
 
 	return shelfArray;
-}
-
-//Accessors
-- (QSCatalogEntry *)catalog {
-	return catalog;
-}
-
-- (void)setCatalog:(QSCatalogEntry *)newCatalog {
-	catalog = newCatalog;
 }
 
 - (NSMutableSet *)defaultSearchSet { return defaultSearchSet;  }
