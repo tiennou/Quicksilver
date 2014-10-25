@@ -84,71 +84,77 @@ static CGFloat searchSpeed = 0.0;
 }
 
 - (id)init {
-	if (self = [super init]) {
-        // Set a BOOL to ensure nothing attempts to access the catalog until it's fully loaded
-        catalogLoaded = NO;
-        
-		NSNumber *minScore = [[NSUserDefaults standardUserDefaults] objectForKey:@"QSMinimumScore"];
-		if (minScore) {
-			QSMinScore = [minScore doubleValue];
-			NSLog(@"Minimum Score set to %f", QSMinScore);
-		}
-		[QSLibrarian createDirectories];
-		enabledPresetsDictionary = [[NSMutableDictionary alloc] init];
-        _objectDictionary = [[QSThreadSafeMutableDictionary alloc] init];
+	self = [super init];
+	if (!self) return nil;
 
-		//Initialize Variables
-		appSearchArrays = nil;
-		typeArrays = [NSMutableDictionary dictionaryWithCapacity:1];
-		entriesBySource = [[NSMutableDictionary alloc] initWithCapacity:1];
-        
-		omittedIDs = nil;
-		entriesByID = [[NSMutableDictionary alloc] initWithCapacity:1];
-		[self setShelfArrays:[NSMutableDictionary dictionaryWithCapacity:1]];
-		[self setCatalogArrays:[NSMutableDictionary dictionaryWithCapacity:1]];
+	// Set a BOOL to ensure nothing attempts to access the catalog until it's fully loaded
+	catalogLoaded = NO;
 
-		NSDictionary *modulesEntry = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-			@"Plugins", kItemName,
-			@"QSPlugIn", kItemIcon,
-			@"QSPresetModules", kItemID,
-			@"QSGroupObjectSource", kItemSource,
-			[NSMutableArray array] , kItemChildren,
-			[NSNumber numberWithBool:YES] , kItemEnabled, nil];
-
-#ifdef DEBUG
-		if ((NSInteger) getenv("QSDisableCatalog") || GetCurrentKeyModifiers() & shiftKey) {
-			NSLog(@"Disabling Catalog");
-		} else {
-#endif
-			[self setCatalog:[QSCatalogEntry entryWithDictionary:
-			[NSMutableDictionary dictionaryWithObjectsAndKeys:@"QSCATALOGROOT", kItemName, @"QSGroupObjectSource", kItemSource, [NSMutableArray arrayWithObjects:modulesEntry, nil] , kItemChildren, [NSNumber numberWithBool:YES] , kItemEnabled, nil]]];
-#ifdef DEBUG
-		}
-#endif
-
-		self.scanTask = [QSTask taskWithIdentifier:@"QSLibrarianScanTask"];
-		self.scanTask.name = @"Updating Catalog";
-		self.scanTask.icon = [QSResourceManager imageNamed:@"Catalog.icns"];
-		self.scanTask.showProgress = YES;
-
-		// Register for Notifications
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogEntryChangedNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogStructureChanged object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadIDDictionary:) name:QSCatalogStructureChanged object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadSets:) name:QSCatalogEntryIndexedNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadSource:) name:QSCatalogSourceInvalidated object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadEntry:) name:QSCatalogEntryInvalidatedNotification object:nil];
-
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateScanTask:) name:QSCatalogEntryIsIndexingNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateScanTask:) name:QSCatalogEntryIndexedNotification object:nil];
-#if 0
-		//Create proxy Images
-		[(NSImage *)[[NSImage alloc] initWithSize:NSZeroSize] setName:@"QSDirectProxyImage"];
-		[(NSImage *)[[NSImage alloc] initWithSize:NSZeroSize] setName:@"QSDefaultAppProxyImage"];
-		[(NSImage *)[[NSImage alloc] initWithSize:NSZeroSize] setName:@"QSIndirectProxyImage"];
-#endif
-		[self loadShelfArrays];
+	NSNumber *minScore = [[NSUserDefaults standardUserDefaults] objectForKey:@"QSMinimumScore"];
+	if (minScore) {
+		QSMinScore = [minScore doubleValue];
+		NSLog(@"Minimum Score set to %f", QSMinScore);
 	}
+	[QSLibrarian createDirectories];
+	enabledPresetsDictionary = [[NSMutableDictionary alloc] init];
+	_objectDictionary = [[QSThreadSafeMutableDictionary alloc] init];
+
+	self.scanTask = [QSTask taskWithIdentifier:@"QSLibrarianScanTask"];
+	self.scanTask.name = NSLocalizedString(@"Updating Catalog", @"Catalog Scan Task name");
+	self.scanTask.icon = [QSResourceManager imageNamed:@"Catalog.icns"];
+
+	// Initialize Variables
+	appSearchArrays = nil;
+	typeArrays = [NSMutableDictionary dictionaryWithCapacity:1];
+	entriesBySource = [[NSMutableDictionary alloc] initWithCapacity:1];
+
+	omittedIDs = nil;
+	entriesByID = [[NSMutableDictionary alloc] initWithCapacity:1];
+	[self setShelfArrays:[NSMutableDictionary dictionaryWithCapacity:1]];
+	[self setCatalogArrays:[NSMutableDictionary dictionaryWithCapacity:1]];
+
+	NSDictionary *modulesEntry = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+								  @"Plugins", kItemName,
+								  @"QSPlugIn", kItemIcon,
+								  @"QSPresetModules", kItemID,
+								  @"QSGroupObjectSource", kItemSource,
+								  [NSMutableArray array] , kItemChildren,
+								  [NSNumber numberWithBool:YES] , kItemEnabled, nil];
+
+#ifdef DEBUG
+	if ((NSInteger) getenv("QSDisableCatalog") || GetCurrentKeyModifiers() & shiftKey) {
+		NSLog(@"Disabling Catalog");
+	} else {
+#endif
+		[self setCatalog:[QSCatalogEntry entryWithDictionary:
+		[NSMutableDictionary dictionaryWithObjectsAndKeys:@"QSCATALOGROOT", kItemName, @"QSGroupObjectSource", kItemSource, [NSMutableArray arrayWithObjects:modulesEntry, nil] , kItemChildren, [NSNumber numberWithBool:YES] , kItemEnabled, nil]]];
+#ifdef DEBUG
+	}
+#endif
+
+	self.scanTask = [QSTask taskWithIdentifier:@"QSLibrarianScanTask"];
+	self.scanTask.name = @"Updating Catalog";
+	self.scanTask.icon = [QSResourceManager imageNamed:@"Catalog.icns"];
+	self.scanTask.showProgress = YES;
+
+	// Register for Notifications
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogEntryChangedNotification object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogStructureChanged object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadIDDictionary:) name:QSCatalogStructureChanged object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadSets:) name:QSCatalogEntryIndexedNotification object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadSource:) name:QSCatalogSourceInvalidated object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadEntry:) name:QSCatalogEntryInvalidatedNotification object:nil];
+
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateScanTask:) name:QSCatalogEntryIsIndexingNotification object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateScanTask:) name:QSCatalogEntryIndexedNotification object:nil];
+#if 0
+	//Create proxy Images
+	[(NSImage *)[[NSImage alloc] initWithSize:NSZeroSize] setName:@"QSDirectProxyImage"];
+	[(NSImage *)[[NSImage alloc] initWithSize:NSZeroSize] setName:@"QSDefaultAppProxyImage"];
+	[(NSImage *)[[NSImage alloc] initWithSize:NSZeroSize] setName:@"QSIndirectProxyImage"];
+#endif
+
+	[self loadShelfArrays];
 
 	return self;
 }
