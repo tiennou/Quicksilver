@@ -24,9 +24,38 @@ QSLibrarian *QSLib = nil;
 static CGFloat searchSpeed = 0.0;
 #endif
 
-@interface QSLibrarian ()
+@interface QSLibrarian () {
+	QSCatalogEntry *catalog; //Root Catalog Entry
+
+	NSMutableDictionary *enabledPresetsDictionary;
+	NSMutableSet *defaultSearchSet;
+	NSMutableSet *omittedIDs;
+	QSTaskController *activityController;
+
+	NSMutableDictionary *catalogArrays; // Arrays for each leaf catalog entry (Entry)
+	NSMutableDictionary *typeArrays; // Type arrays (Type / Entry)
+
+	NSArray *defaultSearchArrays; // (Entry)
+	NSMutableDictionary *appSearchArrays; //Default Arrays for a given application (AppName / Entry)
+
+	NSMutableDictionary *shelfArrays; //Arrays for User Shelves
+
+	NSMutableArray *actionObjects;
+	NSMutableDictionary *actionIdentifiers;
+
+	NSMutableDictionary *objectSources;
+	NSMutableDictionary *entriesBySource;
+	NSMutableDictionary *entriesByID;
+
+	NSMutableArray *invalidIndexes;
+	NSInteger scannerCount;
+
+@private
+	BOOL catalogLoaded;
+}
 
 @property (retain) QSTask *scanTask;
+
 @end
 
 @implementation QSLibrarian
