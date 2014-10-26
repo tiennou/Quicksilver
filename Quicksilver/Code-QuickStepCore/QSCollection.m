@@ -152,4 +152,8 @@
     [self removeObjectAtIndex:index];
 }
 
+- (NSString *)stringValue {
+    return @"combined objects";
+}
+
 @end
