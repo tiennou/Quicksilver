@@ -189,7 +189,7 @@
 			[[self window] displayIfNeeded];
 			[scanProgress setUsesThreadedAnimation:YES];
 			[scanProgress startAnimation:self];
-			[QSLib startThreadedAndForcedScan];
+			[QSLib scanCatalogIgnoringIndexes:YES];
 		}
 		[[gettingStartedView mainFrame] loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"Contents/Resources/GettingStarted.html"]]]];
 	} else if ([[item identifier] isEqualToString:@"plugins"]) {

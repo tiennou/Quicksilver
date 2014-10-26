@@ -79,10 +79,6 @@ static CGFloat searchSpeed = 0.0;
 	path = [pShelfLocation stringByStandardizingPath];
 	if (![manager fileExistsAtPath:path isDirectory:nil]) [manager createDirectoriesForPath:path];
 }
-+ (void)removeIndexes {
-	[[NSFileManager defaultManager] removeItemAtPath:[pIndexLocation stringByStandardizingPath] error:nil];
-	[self createDirectories];
-}
 - (void)loadDefaultCatalog {
 	//	[self setCatalog:[NSMutableDictionary dictionaryWithContentsOfFile: [[NSBundle mainBundle] pathForResource:@"Catalog" ofType:@"plist"]]];
 }
@@ -168,6 +164,11 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 	[self loadShelfArrays];
 
 	return self;
+}
+
+- (void)removeIndexes {
+	[[NSFileManager defaultManager] removeItemAtPath:[pIndexLocation stringByStandardizingPath] error:nil];
+	[self createDirectories];
 }
 
 - (void)enableEntries {

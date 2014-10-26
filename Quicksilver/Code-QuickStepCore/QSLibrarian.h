@@ -26,8 +26,8 @@ extern NSString *const QSCatalogSourceInvalidatedNotification;
 @property (readonly, retain) QSCatalogEntry *catalog;
 
 + (instancetype)sharedInstance;
-+ (void)removeIndexes;
 
+- (void)removeIndexes;
 - (void)loadDefaultCatalog;
 
 - (void)assignCustomAbbreviationForItem:(QSObject *)item;

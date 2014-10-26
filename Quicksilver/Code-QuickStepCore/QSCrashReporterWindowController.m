@@ -62,9 +62,9 @@
 }
 
 - (void)clearCaches {
-    // Use QSLibrarian to clear caches and force a new scan
-    [QSLibrarian removeIndexes];
-    [QSLib startThreadedAndForcedScan];
+	// Use QSLibrarian to clear caches and force a new scan
+	[QSLib removeIndexes];
+	[QSLib scanCatalogIgnoringIndexes:YES];
 }
 
 - (void)deletePlugin {
