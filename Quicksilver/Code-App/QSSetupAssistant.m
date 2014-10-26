@@ -79,7 +79,7 @@
 	//[setupTabView removeTabViewItem:[setupTabView tabViewItemAtIndex:[setupTabView indexOfTabViewItemWithIdentifier:@"features"]]];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(installStatusChanged:) name:@"QSPlugInUpdatesFinished" object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(catalogIndexed:) name:QSCatalogEntryIsIndexingNotification object:nil];
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(catalogIndexingFinished:) name:QSCatalogIndexingCompleted object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(catalogIndexingFinished:) name:QSCatalogIndexingCompletedNotification object:nil];
 
 	[[self window] setLevel:NSNormalWindowLevel];
 

@@ -273,7 +273,7 @@ static id _sharedInstance;
 	if (![sourceString isEqualToString:@"QSGroupObjectSource"])
 		[self showOptionsDrawer];
 
-	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChanged object:nil];
+	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChangedNotification object:nil];
 	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogEntryChangedNotification object:childEntry];
 }
 
@@ -459,7 +459,7 @@ static id _sharedInstance;
 	if (shouldShowOptions)
 		[self showOptionsDrawer];
 
-	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChanged object:nil];
+	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChangedNotification object:nil];
 	return YES;
 }
 
@@ -469,7 +469,7 @@ static id _sharedInstance;
 	[currentItem setEnabled:NO];
     [self reloadData];
 	[self selectEntry:newItem];
-	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChanged object:nil];
+	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChangedNotification object:nil];
 }
 
 -(void)reloadData {

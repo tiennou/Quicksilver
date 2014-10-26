@@ -7,9 +7,6 @@
 
 #define QSActionsChanged @"QSActionsChanged"
 #define QSReleaseCaches @"QSReleaseCaches"
-#define QSCatalogStructureChanged @"QSCatalogStructureChanged"
-#define QSCatalogIndexingCompleted @"QSCatalogIndexingCompleted"
-#define QSCatalogSourceInvalidated @"QSCatalogSourceInvalidated"
 
 #define QSCommandExecutedNotification @"QSCommandExecutedNotification"
 

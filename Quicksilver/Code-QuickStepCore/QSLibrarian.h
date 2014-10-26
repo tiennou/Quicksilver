@@ -14,6 +14,10 @@ extern CGFloat QSMinScore;
 @class QSLibrarian;
 extern QSLibrarian *QSLib; // Shared Instance
 
+extern NSString *const QSCatalogStructureChangedNotification;
+extern NSString *const QSCatalogIndexingCompletedNotification;
+extern NSString *const QSCatalogSourceInvalidatedNotification;
+
 @interface QSLibrarian : NSObject
 
 @property (retain) QSThreadSafeMutableDictionary *objectDictionary;

@@ -14,6 +14,10 @@
 #import "QSCatalogEntry.h"
 #import "QSCatalogEntry_Private.h"
 
+NSString *const QSCatalogStructureChangedNotification  = @"QSCatalogStructureChanged";
+NSString *const QSCatalogIndexingCompletedNotification = @"QSCatalogIndexingCompleted";
+NSString *const QSCatalogSourceInvalidatedNotification = @"QSCatalogSourceInvalidated";
+
 //#define compGT(a, b) (a < b)
 
 CGFloat QSMinScore = 0.333333;
@@ -146,10 +150,10 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 
 	// Register for Notifications
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogEntryChangedNotification object:nil];
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogStructureChanged object:nil];
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadIDDictionary:) name:QSCatalogStructureChanged object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogStructureChangedNotification object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadIDDictionary:) name:QSCatalogStructureChangedNotification object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadSets:) name:QSCatalogEntryIndexedNotification object:nil];
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadSource:) name:QSCatalogSourceInvalidated object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadSource:) name:QSCatalogSourceInvalidatedNotification object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadEntry:) name:QSCatalogEntryInvalidatedNotification object:nil];
 
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateScanTask:) name:QSCatalogEntryIsIndexingNotification object:nil];
@@ -604,7 +608,7 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
             self.scanTask.progress = 1.0;
             [self.scanTask stop];
 
-            [[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogIndexingCompleted object:nil];
+			[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogIndexingCompletedNotification object:nil];
             scannerCount--;
         }
     });
@@ -780,7 +784,7 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 	[self registerPresets:info inBundle: bundle scan:catalogLoaded];
 	if (catalogLoaded) {
 		[self reloadIDDictionary:nil];
-		[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChanged object:nil];
+		[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChangedNotification object:nil];
 	}
 	return YES;
 }

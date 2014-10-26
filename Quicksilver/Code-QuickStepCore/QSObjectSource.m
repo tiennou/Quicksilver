@@ -19,7 +19,7 @@
 
 - (void)invalidateSelf {
 	//  NSLog(@"invalidated %@", self);
-	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogSourceInvalidated object:NSStringFromClass([self class])];
+	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogSourceInvalidatedNotification object:NSStringFromClass([self class])];
 }
 
 - (BOOL)indexIsValidFromDate:(NSDate *)indexDate forEntry:(NSDictionary *)theEntry {

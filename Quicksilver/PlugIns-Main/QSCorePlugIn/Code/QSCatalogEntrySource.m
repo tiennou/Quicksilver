@@ -32,7 +32,7 @@ static NSImage *prefsCatalogImage = nil;
 
 - (id)init {
 	if((self = [super init])) {
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(invalidateSelf) name:QSCatalogStructureChanged object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(invalidateSelf) name:QSCatalogStructureChangedNotification object:nil];
 	}
 	return self;
 }
@@ -174,7 +174,7 @@ static NSImage *prefsCatalogImage = nil;
     [[parentEntry children] addObject:childEntry];
 
     [childEntry scanForced:YES];
-    [[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChanged object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChangedNotification object:nil];
 	[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogEntryChangedNotification object:childEntry];
     [dObject setObject:uniqueString forType:QSCatalogEntryPboardType];
     
