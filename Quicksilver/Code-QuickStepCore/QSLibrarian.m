@@ -72,17 +72,6 @@ static CGFloat searchSpeed = 0.0;
 	return QSLib;
 }
 
-+ (void)createDirectories {
-	NSFileManager *manager = [NSFileManager defaultManager];
-	NSString *path = [pIndexLocation stringByStandardizingPath];
-	if (![manager fileExistsAtPath:path isDirectory:nil]) [manager createDirectoriesForPath:path];
-	path = [pShelfLocation stringByStandardizingPath];
-	if (![manager fileExistsAtPath:path isDirectory:nil]) [manager createDirectoriesForPath:path];
-}
-- (void)loadDefaultCatalog {
-	//	[self setCatalog:[NSMutableDictionary dictionaryWithContentsOfFile: [[NSBundle mainBundle] pathForResource:@"Catalog" ofType:@"plist"]]];
-}
-
 - (id)init {
 	self = [super init];
 	if (!self) return nil;
@@ -95,12 +84,14 @@ static CGFloat searchSpeed = 0.0;
 		QSMinScore = [minScore doubleValue];
 		NSLog(@"Minimum Score set to %f", QSMinScore);
 	}
-	[QSLibrarian createDirectories];
+
+	[self createDirectories];
+
 	enabledPresetsDictionary = [[NSMutableDictionary alloc] init];
 	_objectDictionary = [[QSThreadSafeMutableDictionary alloc] init];
 
 	self.scanTask = [QSTask taskWithIdentifier:@"QSLibrarianScanTask"];
-	self.scanTask.name = NSLocalizedString(@"Updating Catalog", @"Catalog Scan Task name");
+	self.scanTask.name = NSLocalizedString(@"Catalog", @"Catalog Scan Task name");
 	self.scanTask.icon = [QSResourceManager imageNamed:@"Catalog.icns"];
 
 	// Initialize Variables
@@ -110,30 +101,31 @@ static CGFloat searchSpeed = 0.0;
 
 	omittedIDs = nil;
 	entriesByID = [[NSMutableDictionary alloc] initWithCapacity:1];
-	[self setShelfArrays:[NSMutableDictionary dictionaryWithCapacity:1]];
-	[self setCatalogArrays:[NSMutableDictionary dictionaryWithCapacity:1]];
-
-	NSDictionary *modulesEntry = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-								  @"Plugins", kItemName,
-								  @"QSPlugIn", kItemIcon,
-								  @"QSPresetModules", kItemID,
-								  @"QSGroupObjectSource", kItemSource,
-								  [NSMutableArray array] , kItemChildren,
-								  [NSNumber numberWithBool:YES] , kItemEnabled, nil];
+	shelfArrays = [[NSMutableDictionary alloc] initWithCapacity:1];
+	catalogArrays = [[NSMutableDictionary alloc] initWithCapacity:1];
 
 #ifdef DEBUG
 	if ((NSInteger) getenv("QSDisableCatalog") || GetCurrentKeyModifiers() & shiftKey) {
 		NSLog(@"Disabling Catalog");
 	} else {
 #endif
-		NSDictionary *catalogDict = @{
-			kItemName: @"QSCATALOGROOT",
-			kItemSource: @"QSGroupObjectSource",
-			kItemChildren: modulesEntry,
-			kItemEnabled: @(YES),
-		};
 
-self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
+		NSDictionary *modulesEntry = @{
+									   kItemName: @"Plugins",
+									   kItemIcon: @"QSPlugIn",
+									   kItemID: @"QSPresetModules",
+									   kItemSource: @"QSGroupObjectSource",
+									   kItemEnabled: @(YES),
+									   };
+
+		NSDictionary *catalogDict = @{
+									  kItemName: @"QSCATALOGROOT",
+									  kItemSource: @"QSGroupObjectSource",
+									  kItemChildren: @[modulesEntry],
+									  kItemEnabled: @(YES),
+									  };
+
+		self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 
 #ifdef DEBUG
 	}
@@ -161,9 +153,51 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 	[(NSImage *)[[NSImage alloc] initWithSize:NSZeroSize] setName:@"QSIndirectProxyImage"];
 #endif
 
-	[self loadShelfArrays];
+	// Perform the rest of the initialization in the background
+	QSGCDAsync(^{
+		self.scanTask.status = NSLocalizedString(@"Loading", nil);
+		[self.scanTask start];
+		[self loadShelfArrays];
+		[self pruneInvalidChildren];
+		[self loadCatalogInfo];
+
+		// Inform any listeners that we have completed initialization
+		catalogLoaded = YES;
+		[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChangedNotification object:nil];
+
+		self.scanTask.status = NSLocalizedString(@"Scanning", nil);
+		// We should be good to go, trigger a rescan
+		[self scanCatalog:self];
+
+		// Now perform some other stuff
+		[self enableEntries];
+		[self loadCatalogArrays];
+
+		self.scanTask.status = NSLocalizedString(@"Reloading sources", nil);
+		[self reloadEntrySources:nil];
+
+		// Let's load more stuff
+		self.scanTask.status = NSLocalizedString(@"Loading missing indexes", nil);
+		[self loadMissingIndexes];
+
+		[self.scanTask stop];
+	});
 
 	return self;
+}
+
+- (void)dealloc {
+	/* Warning: we are a singleton, as the OS will just reap memory this will *never* be called */
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	[self writeCatalog:self];
+}
+
+- (void)createDirectories {
+	NSFileManager *manager = [NSFileManager defaultManager];
+	NSString *path = [pIndexLocation stringByStandardizingPath];
+	if (![manager fileExistsAtPath:path isDirectory:nil]) [manager createDirectoriesForPath:path];
+	path = [pShelfLocation stringByStandardizingPath];
+	if (![manager fileExistsAtPath:path isDirectory:nil]) [manager createDirectoriesForPath:path];
 }
 
 - (void)removeIndexes {
@@ -171,11 +205,15 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 	[self createDirectories];
 }
 
+- (void)loadDefaultCatalog {
+	//	[self setCatalog:[NSMutableDictionary dictionaryWithContentsOfFile: [[NSBundle mainBundle] pathForResource:@"Catalog" ofType:@"plist"]]];
+}
+
 - (void)enableEntries {
 	[self.catalog.leafEntries makeObjectsPerformSelector:@selector(enable)];
 }
 
-- (void)pruneInvalidChildren:(id)sender {
+- (void)pruneInvalidChildren {
 #ifdef DEBUG
 	if(VERBOSE) NSLog(@"prune invalid");
 #endif
@@ -197,7 +235,7 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 }
 
 
-- (void)registerPresets:(NSArray *)newPresets inBundle:(NSBundle *)bundle scan:(BOOL)scan {
+- (void)registerPresets:(NSArray *)newPresets inBundle:(NSBundle *)bundle {
 	for (NSMutableDictionary *dict in newPresets) {
 		QSCatalogEntry *entry = [QSCatalogEntry entryWithDictionary:dict];
 		NSString *path = [dict objectForKey:@"catalogPath"];
@@ -213,12 +251,15 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 		}
 		[parent.children addObject:entry];
 #warning oh yeah, while we're at it, sort on each loop !
-        [parent.children sortUsingComparator:^NSComparisonResult(QSCatalogEntry *obj1, QSCatalogEntry *obj2) {
-            return [obj1.name localizedCaseInsensitiveCompare:obj2.name];
-        }];
-		if (scan) [entry scanForced:YES];
+
+		[parent.children sortUsingComparator:^NSComparisonResult(QSCatalogEntry *obj1, QSCatalogEntry *obj2) {
+			return [obj1.name localizedCaseInsensitiveCompare:obj2.name];
+		}];
+		if (catalogLoaded) [entry scanForced:YES];
 	}
-	//[catalogChildren replaceObjectsInRange:NSMakeRange(0, 0) withObjectsFromArray:newPresets];
+
+	if (catalogLoaded)
+		[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChangedNotification object:nil];
 }
 
 - (void)initCatalog {}
@@ -227,36 +268,25 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 	//	NSLog(@"load Catalog %p %@", catalog, [catalog getChildren]);
 	//[catalogChildren addObject:[QSCatalogEntry entryWithDictionary:[NSDictionary dictionaryWithObjectsAndKeys:@"QSSeparator", kItemID, nil]]];
 
-    QSCatalogEntry *customEntry = [QSCatalogEntry entryWithDictionary:[NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                                                       @"Custom", kItemName,
-                                                                       @"ToolbarCustomizeIcon", kItemIcon,
-                                                                       kCustomCatalogID, kItemID,
-                                                                       @"QSGroupObjectSource", kItemSource,
-                                                                       [NSMutableArray array] , kItemChildren,
-                                                                       [NSNumber numberWithBool:YES] , @"permanent",
-                                                                       [NSNumber numberWithBool:YES] , kItemEnabled, nil]];
-    
+	QSCatalogEntry *customEntry = [QSCatalogEntry entryWithDictionary:[NSMutableDictionary dictionaryWithObjectsAndKeys:
+																	   @"Custom", kItemName,
+																	   @"ToolbarCustomizeIcon", kItemIcon,
+																	   kCustomCatalogID, kItemID,
+																	   @"QSGroupObjectSource", kItemSource,
+																	   [NSMutableArray array], kItemChildren,
+																	   [NSNumber numberWithBool:YES], @"permanent",
+																	   [NSNumber numberWithBool:YES], kItemEnabled, nil]];
+
 	[self.catalog.children addObject:customEntry];
-    
+
 	NSMutableDictionary *catalogStorage = [NSMutableDictionary dictionaryWithContentsOfFile:[pCatalogSettings stringByStandardizingPath]];
 
 	[enabledPresetsDictionary addEntriesFromDictionary:[catalogStorage objectForKey:@"enabledPresets"]];
 	omittedIDs = [NSMutableSet setWithArray:[catalogStorage objectForKey:@"omittedItems"]];
 
-    for(NSDictionary * entry in [catalogStorage objectForKey:@"customEntries"]) {
-        [[customEntry children] addObject:[QSCatalogEntry entryWithDictionary:entry]];
-    }
-    
-    catalogLoaded = YES;
-	[self reloadIDDictionary:nil];
-	//NSLog(@"load Catalog %p %@", catalog, [catalog getChildren]);
-
-}
-
-- (void)dealloc {
-    /* Warning: we are a singleton, as the OS will just reap memory this will *never* be called */
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
-    [self writeCatalog:self];
+	for (NSDictionary *entry in [catalogStorage objectForKey:@"customEntries"]) {
+		[[customEntry children] addObject:[QSCatalogEntry entryWithDictionary:entry]];
+	}
 }
 
 - (void)writeCatalog:(id)sender {
@@ -615,20 +645,20 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
     });
 }
 
-
 - (void)startThreadedScan {
-    [self scanCatalog:nil];
+	[self scanCatalogIgnoringIndexes:NO];
 }
+
 - (void)startThreadedAndForcedScan {
-    [self forceScanCatalog:nil];
+	[self scanCatalogIgnoringIndexes:YES];
 }
+
 - (IBAction)forceScanCatalog:(id)sender {
 	[self scanCatalogIgnoringIndexes:YES];
 }
 
 - (IBAction)scanCatalog:(id)sender {
 	[self scanCatalogIgnoringIndexes:NO];
-	//NSLog(@"scanned");
 }
 
 - (BOOL)itemIsOmitted:(QSBasicObject *)item {
@@ -782,11 +812,7 @@ self.catalog = [QSCatalogEntry entryWithDictionary:catalogDict];
 
 @implementation QSLibrarian (QSPlugInInfo)
 - (BOOL)handleInfo:(id)info ofType:(NSString *)type fromBundle:(NSBundle *)bundle {
-	[self registerPresets:info inBundle: bundle scan:catalogLoaded];
-	if (catalogLoaded) {
-		[self reloadIDDictionary:nil];
-		[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogStructureChangedNotification object:nil];
-	}
+	[self registerPresets:info inBundle:bundle];
 	return YES;
 }
 @end

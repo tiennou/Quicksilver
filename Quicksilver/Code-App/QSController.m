@@ -582,22 +582,8 @@ static QSController *defaultController = nil;
     [QSModifierKeyEvent resetModifierState];
 }
 
-- (IBAction)rescanItems:sender { [QSLib startThreadedScan];  }
-- (IBAction)forceRescanItems:sender { [QSLib startThreadedAndForcedScan];  }
-
-- (void)delayedStartup {
-        
-#ifdef DEBUG
-    if (DEBUG_STARTUP) NSLog(@"Delayed Startup");
-#endif
-    
-    QSTask *task = [QSTask taskWithIdentifier:@"QSDelayedStartup"];
-    task.name = NSLocalizedString(@"Starting Up...", @"Delayed startup task name");
-    task.status = NSLocalizedString(@"Updating Catalog", @"Delayed startup task status");
-    [task start];
-    [[QSLibrarian sharedInstance] loadMissingIndexes];
-    [task stop];
-}
+- (IBAction)rescanItems:sender { [QSLib scanCatalogIgnoringIndexes:NO];  }
+- (IBAction)forceRescanItems:sender { [QSLib scanCatalogIgnoringIndexes:YES];  }
 
 - (void)checkForFirstRun {
 
@@ -889,15 +875,7 @@ static QSController *defaultController = nil;
 		NSLog(@"PlugIns loaded");
 #endif
 
-	[[QSLibrarian sharedInstance] initCatalog];
-
-	[[QSLibrarian sharedInstance] pruneInvalidChildren:nil];
-	[[QSLibrarian sharedInstance] loadCatalogInfo];
-
 	[QSExec loadFileActions];
-
-	[[QSLibrarian sharedInstance] reloadIDDictionary:nil];
-	[[QSLibrarian sharedInstance] enableEntries];
 	
 #ifdef DEBUG
 	if (DEBUG_STARTUP)
@@ -911,16 +889,8 @@ static QSController *defaultController = nil;
 			[QSLibrarian removeIndexes];
 			[QSLib startThreadedAndForcedScan];
 		}
-	} else {
-		[[QSLibrarian sharedInstance] loadCatalogArrays];
 	}
 #endif
-	
-#ifdef DEBUG
-	[[QSLibrarian sharedInstance] loadCatalogArrays];
-#endif
-	
-	[[QSLibrarian sharedInstance] reloadEntrySources:nil];
 
 	if (atLogin)
 		[self setupSplash];
@@ -998,9 +968,6 @@ static QSController *defaultController = nil;
 
 	[nc postNotificationName:@"QSEventNotification" object:@"QSQuicksilverLaunchedEvent" userInfo:nil];
 
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-        [self delayedStartup];
-    });
 	[self startDropletConnection];
 }
 
