@@ -126,6 +126,11 @@ static CGFloat searchSpeed = 0.0;
 		}
 #endif
 
+		self.scanTask = [QSTask taskWithIdentifier:@"QSLibrarianScanTask"];
+		self.scanTask.name = @"Updating Catalog";
+		self.scanTask.icon = [QSResourceManager imageNamed:@"Catalog.icns"];
+		self.scanTask.showProgress = YES;
+
 		// Register for Notifications
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogEntryChangedNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(writeCatalog:) name:QSCatalogStructureChanged object:nil];
@@ -143,11 +148,6 @@ static CGFloat searchSpeed = 0.0;
 		[(NSImage *)[[NSImage alloc] initWithSize:NSZeroSize] setName:@"QSIndirectProxyImage"];
 #endif
 		[self loadShelfArrays];
-
-        _scanTask = [QSTask taskWithIdentifier:@"QSLibrarianScanTask"];
-        _scanTask.name = @"Updating Catalog";
-        _scanTask.icon = [QSResourceManager imageNamed:@"Catalog.icns"];
-        _scanTask.showProgress = YES;
 	}
 
 	return self;
