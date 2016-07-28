@@ -60,8 +60,11 @@ static CGFloat searchSpeed = 0.0;
 
 @implementation QSLibrarian
 
-+ (id)sharedInstance {
-	if (!QSLib) QSLib = [[[self class] allocWithZone:nil] init];
++ (instancetype)sharedInstance {
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		QSLib = [[[self class] allocWithZone:nil] init];
+	});
 	return QSLib;
 }
 

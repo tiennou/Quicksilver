@@ -21,11 +21,11 @@ extern QSLibrarian *QSLib; // Shared Instance
 @property (retain) QSObject *pasteboardObject;
 @property (retain, readonly) QSTask *scanTask;
 
-+ (id)sharedInstance;
++ (instancetype)sharedInstance;
 + (void)removeIndexes;
 
 - (void)loadDefaultCatalog;
-- (id)init;
+
 - (void)assignCustomAbbreviationForItem:(QSObject *)item;
 //- (void)saveCatalogArrays;
 - (void)registerPresets:(NSArray *)newPresets inBundle:(NSBundle *)bundle scan:(BOOL)scan;
