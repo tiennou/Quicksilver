@@ -568,23 +568,31 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
 	if (DEBUG_CATALOG)
 		NSLog(@"loading index for entry: %@ (%@)", self.identifier, [@[(self.isEnabled ? @"enabled" : @"disabled"), (self.canBeIndexed ? @"indexable" : @"transient")] componentsJoinedByString:@","]);
 #endif
-	if (self.isEnabled) {
-		NSMutableArray *dictionaryArray = nil;
-		@try {
-			dictionaryArray = [QSObject objectsWithDictionaryArray:[NSMutableArray arrayWithContentsOfFile:self.indexLocation]];
-        }
-        @catch (NSException *e) {
-            NSLog(@"Error loading index of %@: %@", self.name , e);
-        }
+	// If the entry is not enabled, we lie by saying we loaded its index
+	if (!self.isEnabled) return YES;
 
-        if (!dictionaryArray) {
-            return NO;
-        }
+	// If the entry cannot be indexed, we have to rescan in everytime
+	if (!self.canBeIndexed) return NO;
 
-        [self setContents:dictionaryArray];
-        [NSNotificationCenter.defaultCenter postNotificationName:QSCatalogEntryIndexedNotification object:self];
-        [QSLibrarian.sharedInstance recalculateTypeArraysForItem:self];
+	NSMutableArray *dictionaryArray = nil;
+	@try {
+		dictionaryArray = [QSObject objectsWithDictionaryArray:[NSMutableArray arrayWithContentsOfFile:self.indexLocation]];
 	}
+	@catch (NSException *e) {
+		NSLog(@"Error loading index of %@: %@", self.name , e);
+	}
+
+	if (!dictionaryArray) {
+		return NO;
+	}
+
+	[self setContents:dictionaryArray];
+
+	[NSNotificationCenter.defaultCenter postNotificationName:QSCatalogEntryIndexedNotification object:self];
+
+	// FIXME: Move this in the Librarian
+	[QSLibrarian.sharedInstance recalculateTypeArraysForItem:self];
+
 	return YES;
 }
 
@@ -614,11 +622,18 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
 }
 
 - (BOOL)indexIsValid {
-	if (self.isScanning) {
-		return YES;
-	}
+	// Index for a non-indexable source is always invalid
+	if (!self.canBeIndexed) return NO;
+
+	// We might not have loaded our index yet, we're invalid
+	if (!self.contents) return NO;
+
+	// We're in the process of being rescanned, we're invalid
+	if (self.isScanning) return NO;
+
     __block BOOL isValid = YES;
     QSGCDQueueSync(scanQueue, ^{
+		// FIXME: Why do we "index" ? We're just checking our validity here...
         [[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogEntryIsIndexingNotification object:self];
         NSFileManager *manager = NSFileManager.defaultManager;
         NSString *indexLocation = self.indexLocation;
@@ -718,17 +733,19 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
         return;
 	}
 
-    BOOL valid = [self indexIsValid];
+    BOOL valid = self.canBeIndexed && self.indexIsValid;
+	if (!valid || force) {
 #ifdef DEBUG
 		if (DEBUG_CATALOG)
 			NSLog(@"Scanning source: %@%@%@", self.identifier, (force ? @" (forced)" : @""), (valid ? @" (valid)" : @""));
 #endif
-
-    if (valid && !force) {
-        return;
-    }
-
-    [self scanAndCache];
+		[self scanAndCache];
+	} else {
+#ifdef DEBUG
+		if (DEBUG_CATALOG)
+			NSLog(@"Skipping source: %@, (valid)", self.identifier);
+#endif
+	}
 }
 
 - (NSArray *)contents {

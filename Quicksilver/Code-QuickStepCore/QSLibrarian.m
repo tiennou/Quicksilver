@@ -255,7 +255,14 @@ static CGFloat searchSpeed = 0.0;
 		[parent.children sortUsingComparator:^NSComparisonResult(QSCatalogEntry *obj1, QSCatalogEntry *obj2) {
 			return [obj1.name localizedCaseInsensitiveCompare:obj2.name];
 		}];
-		if (catalogLoaded) [entry scanForced:YES];
+
+		if (!catalogLoaded) {
+			NSLog(@"Catalog is not ready !! %@", entry.identifier);
+		} else if ([entry loadIndex]) {
+			// We loaded the index, nothing more to do
+		} else {
+			[entry scanForced:YES];
+		}
 	}
 
 	if (catalogLoaded)
@@ -478,7 +485,7 @@ static CGFloat searchSpeed = 0.0;
 
 	BOOL indexesValid = YES;
 	for (QSCatalogEntry * entry in self.catalog.leafEntries) {
-		if (![entry loadIndex]) {
+		if (![entry indexIsValid]) {
 			if (!invalidIndexes) invalidIndexes = [[NSMutableArray alloc] init];
 			NSLog(@"entry %@ is invalid", entry);
 			[invalidIndexes addObject:entry];
