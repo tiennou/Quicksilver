@@ -623,6 +623,13 @@ static CGFloat searchSpeed = 0.0;
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
         @autoreleasepool {
+#if DEBUG
+			NSDate *startScanDate = nil;
+			if (DEBUG_CATALOG) {
+				startScanDate = [NSDate date];
+				NSLog(@"Catalog scan: start%@", (force ? @" (forced)" : @""));
+			}
+#endif
             self.scanTask.status = NSLocalizedString(@"Catalog Rescan", @"Catalog rescan task status");
             self.scanTask.progress = -1;
             [self.scanTask start];
@@ -638,6 +645,12 @@ static CGFloat searchSpeed = 0.0;
 
             self.scanTask.progress = 1.0;
             [self.scanTask stop];
+
+#if DEBUG
+			if (DEBUG_CATALOG) {
+				NSLog(@"Catalog scan: finished, took %fs", -[startScanDate timeIntervalSinceNow]);
+			}
+#endif
 
 			[[NSNotificationCenter defaultCenter] postNotificationName:QSCatalogIndexingCompletedNotification object:nil];
             scannerCount--;

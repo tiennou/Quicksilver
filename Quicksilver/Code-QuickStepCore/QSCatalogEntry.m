@@ -564,6 +564,10 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
 }
 
 - (BOOL)loadIndex {
+#if DEBUG
+	if (DEBUG_CATALOG)
+		NSLog(@"loading index for entry: %@ (%@)", self.identifier, [@[(self.isEnabled ? @"enabled" : @"disabled"), (self.canBeIndexed ? @"indexable" : @"transient")] componentsJoinedByString:@","]);
+#endif
 	if (self.isEnabled) {
 		NSMutableArray *dictionaryArray = nil;
 		@try {
@@ -587,7 +591,7 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
 - (void)saveIndex {
     QSGCDQueueSync(scanQueue, ^{
 #ifdef DEBUG
-        if (DEBUG_CATALOG) NSLog(@"saving index for %@", self);
+        if (DEBUG_CATALOG) NSLog(@"saving index for %@", self.identifier);
 #endif
 
         @try {
@@ -712,19 +716,17 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
             }
         }
         return;
-    }
+	}
+
     BOOL valid = [self indexIsValid];
-    if (valid && !force) {
 #ifdef DEBUG
-        if (DEBUG_CATALOG) NSLog(@"\tIndex is valid for source: %@", self.name);
+		if (DEBUG_CATALOG)
+			NSLog(@"Scanning source: %@%@%@", self.identifier, (force ? @" (forced)" : @""), (valid ? @" (valid)" : @""));
 #endif
+
+    if (valid && !force) {
         return;
     }
-
-#ifdef DEBUG
-    if (DEBUG_CATALOG)
-        NSLog(@"Scanning source: %@%@", self.name , (force?@" (forced) ":@""));
-#endif
 
     [self scanAndCache];
 }
