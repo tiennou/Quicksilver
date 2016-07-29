@@ -220,6 +220,14 @@
 	[win orderOut:self];
 }
 
+- (BOOL)initializeEntry:(QSCatalogEntry *)entry {
+    BOOL success = [self chooseFileForEntry:entry];
+    if (success) {
+        [entry scanForced:YES];
+    }
+    return success;
+}
+
 - (void)enableEntry:(QSCatalogEntry *)entry {
 	NSMutableDictionary *settings = entry.sourceSettings;
 	NSString *path = [self fullPathForSettings:settings];
@@ -282,9 +290,9 @@
     [[NSWorkspace sharedWorkspace] selectFile:filePath inFileViewerRootedAtPath:@""];
 }
 
-- (IBAction)chooseFile:(id)sender { [self chooseFile];  }
+- (IBAction)chooseFile:(id)sender { [self chooseFileForEntry:self.selectedEntry]; }
 
-- (BOOL)chooseFile {
+- (BOOL)chooseFileForEntry:(QSCatalogEntry *)entry {
 	NSOpenPanel *openPanel = [NSOpenPanel openPanel];
 	NSString *oldFile = [[itemLocationField stringValue] stringByStandardizingPath];
 	[openPanel setCanChooseDirectories:YES];
@@ -297,11 +305,12 @@
     if (result == NSFileHandlingPanelCancelButton) {
         return NO;
     }
-    
-	[itemLocationField setStringValue:[[[openPanel URL] path] stringByAbbreviatingWithTildeInPath]];
+
+    NSURL *fileURL = [openPanel URL];
+	[itemLocationField setStringValue:[[fileURL path] stringByAbbreviatingWithTildeInPath]];
 	[self setValueForSender:itemLocationField];
-	self.selectedEntry.name = [[openPanel URL] lastPathComponent];
-    [self.selectedEntry refresh:NO];
+	entry.name = fileURL.lastPathComponent;
+	[entry refresh:NO];
 	return YES;
 }
 

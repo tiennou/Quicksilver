@@ -46,6 +46,19 @@
 - (BOOL)entryCanBeIndexed:(QSCatalogEntry *)theEntry;
 
 /**
+ * Initialize the entry
+ *
+ * This ask the entry's source to perform some initialization steps before the entry
+ * is added to the catalog.
+ * The FileSystem object source uses this to ask for its file-system location.
+ *
+ * @param entry The entry to initialize.
+ *
+ * @return YES if the entry was successfully initialized, NO otherwise.
+ */
+- (BOOL)initializeEntry:(QSCatalogEntry *)entry;
+
+/**
  * Informs the source that the entry was enabled
  */
 - (void)enableEntry:(QSCatalogEntry *)entry;

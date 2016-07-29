@@ -69,6 +69,10 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
 	return [[QSCatalogEntry alloc] initWithDictionary:dict];
 }
 
++ (instancetype)entryWithSource:(NSString *)sourceIdentifier {
+    return [(QSCatalogEntry *)[self alloc] initWithSource:sourceIdentifier];
+}
+
 - (NSString *)description {
 	return [NSString stringWithFormat:@"[%@] ", self.name];
 }
@@ -82,6 +86,28 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
     _children = [NSMutableArray array];
     _info = [NSMutableDictionary dictionary];
     _info[kItemID] = [NSString uniqueString];
+
+    return self;
+}
+
+- (instancetype)initWithSource:(NSString *)sourceID {
+    NSParameterAssert(sourceID.length != 0);
+
+    self = [self init];
+    if (!self) return nil;
+
+    _source = [QSReg sourceNamed:sourceID];
+    if (!_source) return nil;
+
+    _info[kItemSource] = sourceID;
+
+    if ([_source respondsToSelector:@selector(initializeEntry:)]) {
+        BOOL success = [_source initializeEntry:self];
+        if (!success) {
+            NSLog(@"Source %@ failed to initialize entry", _source);
+            return nil;
+        }
+    }
 
     return self;
 }

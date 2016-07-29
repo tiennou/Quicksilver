@@ -98,6 +98,15 @@ extern NSString *const QSCatalogEntryInvalidatedNotification;
 + (instancetype)entryWithDictionary:(NSDictionary *)dict;
 
 /**
+ *  Create a new instance of the receiver using the specified source
+ *
+ *  @param sourceIdentifier The source's identifier
+ *
+ *  @return A newly-instantiated entry, or nil.
+ */
++ (instancetype)entryWithSource:(NSString *)sourceIdentifier;
+
+/**
  * Initialize the receiver from a dictionary.
  *
  * @param dict A dictionary containing

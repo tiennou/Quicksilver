@@ -249,26 +249,19 @@ static id _sharedInstance;
 		[catalogSetsController setSelectedObjects:[NSArray arrayWithObject:parentEntry]];
 	}
 
-	NSMutableDictionary *childDict = [NSMutableDictionary dictionaryWithCapacity:5];
-	[childDict setObject:[NSNumber numberWithBool:YES] forKey:kItemEnabled];
-	[childDict setObject:sourceString forKey:kItemSource];
-
-	QSCatalogEntry *childEntry = [QSCatalogEntry entryWithDictionary:childDict];
-	[[parentEntry children] addObject:childEntry];
-    [self reloadData];
-	[self selectEntry:childEntry];
-
-	if ([sourceString isEqualToString:@"QSFileSystemObjectSource"]) {
-		if (![(QSFileSystemObjectSource *)[QSReg sourceNamed:sourceString] chooseFile]) {
-			[[parentEntry children] removeObject:childEntry];
-
-			[treeController rearrangeObjects];
-			[itemTable reloadData];
-			return;
-		} else {
-			[childEntry scanForced:YES];
-		}
+	QSCatalogEntry *childEntry = [QSCatalogEntry entryWithSource:sourceString];
+	if (!childEntry) {
+		[treeController rearrangeObjects];
+		[itemTable reloadData];
+		return;
 	}
+
+	[[parentEntry children] addObject:childEntry];
+
+	childEntry.enabled = YES; // This will trigger a scan
+
+	[self reloadData];
+	[self selectEntry:childEntry];
 
 	if (![sourceString isEqualToString:@"QSGroupObjectSource"])
 		[self showOptionsDrawer];

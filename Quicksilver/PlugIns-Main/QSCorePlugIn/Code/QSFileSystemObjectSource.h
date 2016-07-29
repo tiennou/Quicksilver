@@ -18,7 +18,6 @@
 - (IBAction)setValueForSender:(id)sender;
 - (IBAction)showFile:(id)sender;
 - (IBAction)chooseFile:(id)sender;
-- (BOOL)chooseFile;
 
 - (NSString *)fullPathForSettings:(NSDictionary *)settings;
 - (IBAction)endContainingSheet:(id)sender;
