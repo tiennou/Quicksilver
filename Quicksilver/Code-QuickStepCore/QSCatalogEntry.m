@@ -82,8 +82,32 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
     _children = [NSMutableArray array];
     _info = [NSMutableDictionary dictionary];
     _info[kItemID] = [NSString uniqueString];
+	_info[kItemSettings] = [NSMutableDictionary dictionary];
 
     return self;
+}
+
++ (NSArray *)standardKeys {
+	static NSArray *standardKeys = nil;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		standardKeys = @[
+						 kItemChildren,
+						 @"requiresPath",
+						 @"requiresSettingsPath",
+						 @"requiresBundle",
+						 @"permanent",
+						 kItemSource,
+						 kItemEnabled,
+						 kItemID,
+						 kItemName,
+						 kItemIcon,
+						 @"iconData",
+						 kItemModificationDate,
+						 kItemSettings,
+						 ];
+	});
+	return standardKeys;
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
@@ -92,10 +116,24 @@ NSString *const QSCatalogEntryInvalidatedNotification = @"QSCatalogEntryInvalida
         return nil;
     }
 
-    _info = [dict mutableCopy];
-    NSDictionary *settings = _info[kItemSettings];
-    if (settings)
-        _info[kItemSettings] = settings.mutableCopy;
+	if (!dict[kItemSettings]) {
+		/* No new-style settings dict found, iterate the known keys 
+		 * to reconstruct a new-style catalog entry
+		 */
+		NSMutableDictionary *settings = [dict mutableCopy];
+		for (NSString *key in [self.class standardKeys]) {
+			NSObject *value = settings[key];
+			if (value) {
+				_info[key] = value;
+				[settings removeObjectForKey:key];
+			}
+		}
+		_info[kItemSettings] = settings;
+	} else {
+		/* Make sure our dicts exist and are mutable */
+		[_info addEntriesFromDictionary:dict];
+        _info[kItemSettings] = [_info[kItemSettings] mutableCopy];
+	}
 
     NSArray *childDicts = dict[kItemChildren];
     if (childDicts) {
