@@ -187,9 +187,9 @@
 }
 
 - (QSObject *)switchToApplication:(QSObject *)dObject {
-	NSArray *array = [dObject arrayForType:QSProcessType];
 	NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
 
+	NSArray *array = [dObject arrayForType:QSProcessType];
 	if (!array) {
 		array = [dObject arrayForType:QSFilePathType];
 
@@ -202,28 +202,20 @@
 	if ([[NSApp currentEvent] type] == NSKeyDown && [[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask)
 		[workspace hideOtherApplications:array];
 
-	NSDictionary *procDict;
-
-	for(procDict in array) {
-
-		if (!procDict ) {
-			[workspace launchApplication:[procDict objectForKey:@"NSApplicationPath"]];
-			continue;
-		}
-		BOOL frontmost = [workspace applicationIsFrontmost:procDict];
+	for (NSRunningApplication *app in array) {
+		BOOL frontmost = app.isActive;
 		NSInteger behavior = [[NSUserDefaults standardUserDefaults] integerForKey:@"QSActionAppReopenBehavior"];
 		if (frontmost) behavior = 2;
 
 		switch (behavior) {
 			case 0:
-				[workspace reopenApplication:procDict];
+				[app activateWithOptions:0];
 				break;
 			case 1:
-				[[NSWorkspace sharedWorkspace] activateApplication:procDict];
+				[app activateWithOptions:0];
 				break;
 			case 2:
-				[workspace reopenApplication:procDict];
-				[workspace switchToApplication:procDict frontWindowOnly:NO];
+				[app activateWithOptions:NSApplicationActivateAllWindows|NSApplicationActivateIgnoringOtherApps];
 				break;
 		}
 	}
@@ -232,25 +224,21 @@
 }
 
 - (QSObject *)toggleApplication:(QSObject *)dObject {
-
 	NSArray *array = [dObject arrayForType:QSProcessType];
-	//NSLog(@"arr %@", array);
-	if (array) {
-		if ([[NSWorkspace sharedWorkspace] applicationIsFrontmost:[array lastObject]]) {
-		//	NSLog(@"showing");
-            [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-                [[NSWorkspace sharedWorkspace] hideApplication:obj];
-            }];
-		} else {
-            [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-                [[NSWorkspace sharedWorkspace] activateApplication:obj];
-            }];
-		}
-	} else {
+	if (!array) {
 		array = [dObject validPaths];
-        [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-            [[NSWorkspace sharedWorkspace] openFile:obj];
-        }];
+		[array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+			[[NSWorkspace sharedWorkspace] openFile:obj];
+		}];
+		return nil;
+	}
+
+	for (NSRunningApplication *app in array) {
+		if (app.isHidden) {
+			[app unhide];
+		} else {
+			[app hide];
+		}
 	}
 	return nil;
 }
