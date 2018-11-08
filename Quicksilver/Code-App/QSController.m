@@ -365,7 +365,7 @@ static QSController *defaultController = nil;
 
 - (NSProgressIndicator *)progressIndicator { return [interfaceController progressIndicator];  }
 
-- (void)displayStatusMenuAtPoint:(NSPoint)point { [NSMenu popUpContextMenu:[NSApp mainMenu] withEvent:[NSEvent mouseEventWithType:NSLeftMouseDown location:NSMakePoint(500, 500) modifierFlags:0 timestamp:0 windowNumber:0 context:nil eventNumber:0 clickCount:1 pressure:0] forView:nil withFont:nil];  }
+- (void)displayStatusMenuAtPoint:(NSPoint)point { [NSMenu popUpContextMenu:[NSApp mainMenu] withEvent:[NSEvent mouseEventWithType:NSLeftMouseDown location:NSMakePoint(500, 500) modifierFlags:0 timestamp:0 windowNumber:0 context:nil eventNumber:0 clickCount:1 pressure:0] forView:[NSView focusView] withFont:nil]; }
 
 - (NSMenu *)statusMenuWithQuit {
 	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -452,7 +452,7 @@ static QSController *defaultController = nil;
         [path addClip];
         [QSGlossClipPathForRectAndStyle(rect, 4) addClip];
         [[NSColor colorWithCalibratedWhite:1.0 alpha:0.1] set];
-        NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
         
         [[splashWindow contentView] unlockFocus];
         //		}
@@ -798,9 +798,6 @@ static QSController *defaultController = nil;
 	[nc postNotificationName:QSInterfaceChangedNotification object:self];
 }
 
-/* Deprecated. It's defined in Core Plugin */
-- (id) finderProxy { return [QSReg performSelector:@selector(FSBrowserMediator)]; }
-
 - (void)clearHistory
 {
 	[[[self interfaceController] dSelector] clearHistory];
@@ -862,7 +859,7 @@ static QSController *defaultController = nil;
 		[self showSplash:nil];
         double delayInSeconds = 0.1;
         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-        dispatch_after(popTime, dispatch_get_current_queue(), ^(void) {
+        dispatch_after(popTime, dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^(void) {
             // hide the splash in a background thread
             [self hideSplash:nil];
         });
@@ -1091,7 +1088,7 @@ static QSController *defaultController = nil;
     // make sure we're visible on the first activation
     [NSApp unhideWithoutActivation];
     
-	QSApplicationCompletedLaunch = YES;
+	[QSApp setCompletedLaunch:YES];
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag {
